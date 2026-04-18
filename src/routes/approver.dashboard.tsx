@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Check, FileText, Flag, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, primaryRole, type AppRole } from "@/lib/auth";
@@ -23,6 +23,30 @@ type Approval = Database["public"]["Tables"]["approvals"]["Row"];
 type ApplicationStage = Database["public"]["Enums"]["application_stage"];
 
 export const Route = createFileRoute("/approver/dashboard")({
+  beforeLoad: async () => {
+    // Check if user is authenticated and has approver role
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      throw redirect({ to: "/sign-in" });
+    }
+
+    // Fetch user roles
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id);
+
+    const roles = ((rolesData ?? []) as { role: any }[]).map((r) => r.role);
+    const role = primaryRole(roles);
+
+    // Only allow approvers to access this page
+    const approverRoles: AppRole[] = ["lab_incharge", "hod", "principal", "admin"];
+    if (!approverRoles.includes(role)) {
+      throw redirect({ to: "/student/dashboard" });
+    }
+  },
   component: ApproverDashboard,
 });
 
@@ -54,15 +78,10 @@ function ApproverDashboard() {
     const studentIds = Array.from(new Set((appRows ?? []).map((a) => a.student_id)));
     let profilesById: Record<string, Profile> = {};
     if (studentIds.length) {
-      const { data: profRows } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("id", studentIds);
+      const { data: profRows } = await supabase.from("profiles").select("*").in("id", studentIds);
       profilesById = Object.fromEntries((profRows ?? []).map((p) => [p.id, p]));
     }
-    setApps(
-      (appRows ?? []).map((a) => ({ ...a, student: profilesById[a.student_id] })),
-    );
+    setApps((appRows ?? []).map((a) => ({ ...a, student: profilesById[a.student_id] })));
     setLoading(false);
   };
 
@@ -75,7 +94,10 @@ function ApproverDashboard() {
 
   if (!myStage) {
     return (
-      <DashboardShell title="Approver dashboard" subtitle="Your account has no approval stage assigned.">
+      <DashboardShell
+        title="Approver dashboard"
+        subtitle="Your account has no approval stage assigned."
+      >
         <p className="text-sm text-muted-foreground">Contact an admin to assign your role.</p>
       </DashboardShell>
     );
@@ -400,7 +422,11 @@ function ReviewDialog({
                   onClick={() => submitAction("flag")}
                   disabled={!!acting}
                 >
-                  {acting === "flag" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Flag className="h-3.5 w-3.5" />}
+                  {acting === "flag" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Flag className="h-3.5 w-3.5" />
+                  )}
                   Flag
                 </Button>
                 <Button
@@ -410,7 +436,11 @@ function ReviewDialog({
                   onClick={() => submitAction("reject")}
                   disabled={!!acting}
                 >
-                  {acting === "reject" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                  {acting === "reject" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <X className="h-3.5 w-3.5" />
+                  )}
                   Reject
                 </Button>
                 <Button
@@ -419,7 +449,11 @@ function ReviewDialog({
                   disabled={!!acting}
                   className="bg-success text-success-foreground hover:bg-success/90"
                 >
-                  {acting === "approve" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                  {acting === "approve" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Check className="h-3.5 w-3.5" />
+                  )}
                   Approve
                 </Button>
               </div>

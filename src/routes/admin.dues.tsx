@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import Papa from "papaparse";
 import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Button } from "@/components/ui/button";
+import { primaryRole, type AppRole } from "@/lib/auth";
 import type { Database } from "@/integrations/supabase/types";
 
 type Due = Database["public"]["Tables"]["dues"]["Row"];
@@ -20,6 +21,30 @@ interface Row {
 }
 
 export const Route = createFileRoute("/admin/dues")({
+  beforeLoad: async () => {
+    // Check if user is authenticated and has admin role
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      throw redirect({ to: "/sign-in" });
+    }
+
+    // Fetch user roles
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id);
+
+    const roles = ((rolesData ?? []) as { role: any }[]).map((r) => r.role);
+    const role = primaryRole(roles);
+
+    // Only allow admin and principal to access this page
+    const adminRoles: AppRole[] = ["admin", "principal"];
+    if (!adminRoles.includes(role)) {
+      throw redirect({ to: "/student/dashboard" });
+    }
+  },
   component: AdminDues,
 });
 
@@ -89,7 +114,9 @@ function AdminDues() {
           const { error } = await supabase.from("dues").insert(inserts);
           if (error) throw error;
 
-          toast.success(`Imported ${inserts.length} dues (${rows.length - inserts.length} skipped)`);
+          toast.success(
+            `Imported ${inserts.length} dues (${rows.length - inserts.length} skipped)`,
+          );
           load();
         } catch (e) {
           const msg = e instanceof Error ? e.message : "Import failed";
@@ -115,7 +142,8 @@ function AdminDues() {
           <div>
             <h3 className="text-sm font-semibold">Flat-file CSV import</h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Required columns: <span className="font-mono">roll_no, student_name, department, due_type, amount</span>
+              Required columns:{" "}
+              <span className="font-mono">roll_no, student_name, department, due_type, amount</span>
             </p>
           </div>
           <label>
@@ -129,7 +157,11 @@ function AdminDues() {
               }}
             />
             <span className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
-              {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {importing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
               Upload CSV
             </span>
           </label>
@@ -142,9 +174,13 @@ function AdminDues() {
           <p className="text-xs text-muted-foreground">{dues.length} total</p>
         </div>
         {loading ? (
-          <div className="px-5 py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" /></div>
+          <div className="px-5 py-12 text-center">
+            <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
         ) : dues.length === 0 ? (
-          <div className="px-5 py-12 text-center text-sm text-muted-foreground">No dues recorded.</div>
+          <div className="px-5 py-12 text-center text-sm text-muted-foreground">
+            No dues recorded.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

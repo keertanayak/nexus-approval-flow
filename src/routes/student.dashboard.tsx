@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Download, FileUp, Loader2 } from "lucide-react";
 import JSZip from "jszip";
 import { toast } from "sonner";
-import { useAuth } from "@/lib/auth";
+import { useAuth, dashboardPathForRole, primaryRole } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { StatusHeatmap } from "@/components/status-heatmap";
@@ -16,6 +16,29 @@ type Document = Database["public"]["Tables"]["documents"]["Row"];
 type Due = Database["public"]["Tables"]["dues"]["Row"];
 
 export const Route = createFileRoute("/student/dashboard")({
+  beforeLoad: async () => {
+    // Check if user is authenticated and has student role
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      throw redirect({ to: "/sign-in" });
+    }
+
+    // Fetch user roles
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id);
+
+    const roles = ((rolesData ?? []) as { role: any }[]).map((r) => r.role);
+    const role = primaryRole(roles);
+
+    // Only allow students to access this page
+    if (role !== "student") {
+      throw redirect({ to: dashboardPathForRole(role) });
+    }
+  },
   component: StudentDashboard,
 });
 
@@ -102,9 +125,7 @@ function StudentDashboard() {
       for (const d of docs) {
         try {
           const path = d.file_url; // stored as bucket path
-          const { data, error } = await supabase.storage
-            .from("nexus-documents")
-            .download(path);
+          const { data, error } = await supabase.storage.from("nexus-documents").download(path);
           if (error || !data) continue;
           const buf = await data.arrayBuffer();
           folder.file(`documents/${d.file_name}`, buf);
@@ -248,9 +269,7 @@ function StudentDashboard() {
               <tbody>
                 {apps.map((a) => (
                   <tr key={a.id} className="border-b border-border/60 last:border-0">
-                    <td className="py-2.5 pr-3">
-                      {new Date(a.submission_date).toLocaleString()}
-                    </td>
+                    <td className="py-2.5 pr-3">{new Date(a.submission_date).toLocaleString()}</td>
                     <td className="py-2.5 pr-3">{stageLabel(a.current_stage)}</td>
                     <td className="py-2.5 pr-3">
                       <StatusBadge status={a.status} />
@@ -278,7 +297,10 @@ function StatusBadge({ status }: { status: Application["status"] }) {
       className: "bg-success/15 text-success ring-success/30",
       label: "Approved",
     },
-    rejected: { className: "bg-destructive/15 text-destructive ring-destructive/30", label: "Rejected" },
+    rejected: {
+      className: "bg-destructive/15 text-destructive ring-destructive/30",
+      label: "Rejected",
+    },
   };
   const m = map[status];
   return (

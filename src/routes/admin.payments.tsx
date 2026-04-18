@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { supabase } from "@/integrations/supabase/client";
+import { primaryRole, type AppRole } from "@/lib/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,30 @@ type Due = Database["public"]["Tables"]["dues"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 export const Route = createFileRoute("/admin/payments")({
+  beforeLoad: async () => {
+    // Check if user is authenticated and has admin role
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      throw redirect({ to: "/sign-in" });
+    }
+
+    // Fetch user roles
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id);
+
+    const roles = ((rolesData ?? []) as { role: any }[]).map((r) => r.role);
+    const role = primaryRole(roles);
+
+    // Only allow admin and principal to access this page
+    const adminRoles: AppRole[] = ["admin", "principal"];
+    if (!adminRoles.includes(role)) {
+      throw redirect({ to: "/student/dashboard" });
+    }
+  },
   component: PaymentsSandbox,
 });
 
@@ -59,10 +84,7 @@ function PaymentsSandbox() {
     setPaying(true);
     try {
       // Mark due as paid
-      const { error } = await supabase
-        .from("dues")
-        .update({ status: "paid" })
-        .eq("id", active.id);
+      const { error } = await supabase.from("dues").update({ status: "paid" }).eq("id", active.id);
       if (error) throw error;
 
       // Generate receipt PDF
@@ -110,9 +132,13 @@ function PaymentsSandbox() {
           <h3 className="text-sm font-semibold">Pending dues</h3>
         </div>
         {loading ? (
-          <div className="px-5 py-12 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" /></div>
+          <div className="px-5 py-12 text-center">
+            <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
         ) : dues.length === 0 ? (
-          <div className="px-5 py-12 text-center text-sm text-muted-foreground">All clear · no pending dues.</div>
+          <div className="px-5 py-12 text-center text-sm text-muted-foreground">
+            All clear · no pending dues.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -187,7 +213,11 @@ function PaymentsSandbox() {
                   Cancel
                 </Button>
                 <Button onClick={pay} disabled={paying}>
-                  {paying ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                  {paying ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CreditCard className="h-4 w-4" />
+                  )}
                   Pay ₹ {Number(active.amount).toFixed(2)}
                 </Button>
               </div>
@@ -227,10 +257,18 @@ async function buildReceipt(args: {
 
   page.drawRectangle({ x: 0, y: 380, width: 595, height: 40, color: blue });
   page.drawText("NEXUS · PAYMENT RECEIPT", {
-    x: 30, y: 393, size: 14, font: bold, color: rgb(1, 1, 1),
+    x: 30,
+    y: 393,
+    size: 14,
+    font: bold,
+    color: rgb(1, 1, 1),
   });
   page.drawText(args.receiptId, {
-    x: 460, y: 393, size: 12, font: bold, color: rgb(1, 1, 1),
+    x: 460,
+    y: 393,
+    size: 12,
+    font: bold,
+    color: rgb(1, 1, 1),
   });
 
   let y = 340;
@@ -247,7 +285,11 @@ async function buildReceipt(args: {
   line("Amount", `INR ${args.amount.toFixed(2)}`);
 
   page.drawText("This is a system-generated sandbox receipt. Status: PAID.", {
-    x: 30, y: 60, size: 9, font, color: rgb(0.4, 0.4, 0.4),
+    x: 30,
+    y: 60,
+    size: 9,
+    font,
+    color: rgb(0.4, 0.4, 0.4),
   });
   return pdf.save();
 }

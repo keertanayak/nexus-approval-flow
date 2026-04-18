@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { CheckCircle2, FileUp, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/lib/auth";
+import { useAuth, dashboardPathForRole, primaryRole } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,29 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/student/submit")({
+  beforeLoad: async () => {
+    // Check if user is authenticated and has student role
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      throw redirect({ to: "/sign-in" });
+    }
+
+    // Fetch user roles
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id);
+
+    const roles = ((rolesData ?? []) as { role: any }[]).map((r) => r.role);
+    const role = primaryRole(roles);
+
+    // Only allow students to access this page
+    if (role !== "student") {
+      throw redirect({ to: dashboardPathForRole(role) });
+    }
+  },
   component: SubmitPage,
 });
 
@@ -51,7 +74,9 @@ function SubmitPage() {
   };
 
   const onClear = (key: string) => {
-    setSlots((prev) => prev.map((s) => (s.key === key ? { ...s, file: undefined, error: undefined } : s)));
+    setSlots((prev) =>
+      prev.map((s) => (s.key === key ? { ...s, file: undefined, error: undefined } : s)),
+    );
   };
 
   const allReady = slots.every((s) => s.file && !s.error);
@@ -97,7 +122,9 @@ function SubmitPage() {
         .single();
       if (appErr || !appRow) throw appErr ?? new Error("Could not create application");
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
 
       const total = slots.length;
@@ -222,10 +249,15 @@ function SubmitPage() {
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
           <p className="text-xs text-muted-foreground">
-            Submitting routes the application to the <span className="font-medium text-foreground">Lab in-charge</span> first.
+            Submitting routes the application to the{" "}
+            <span className="font-medium text-foreground">Lab in-charge</span> first.
           </p>
           <Button onClick={submit} disabled={!allReady || submitting} size="lg">
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
+            {submitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileUp className="h-4 w-4" />
+            )}
             Submit application
           </Button>
         </div>
