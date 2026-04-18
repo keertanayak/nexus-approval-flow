@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
-import heroImg from "@/assets/nexus-hero.jpg";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,34 +54,23 @@ function LandingPage() {
 /* ============ HERO ============ */
 function Hero() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden bg-background">
+      <div className="absolute inset-0 -z-10 bg-grid opacity-60" aria-hidden />
+      <div className="absolute inset-0 -z-10 bg-radial-prussian" aria-hidden />
       <div
-        className="absolute inset-0 -z-10 opacity-30"
-        style={{
-          backgroundImage: `url(${heroImg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0 -z-10 bg-grid opacity-50"
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0 -z-10 bg-gradient-to-b from-background/30 via-background/80 to-background"
+        className="absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-b from-transparent to-background"
         aria-hidden
       />
 
       <div className="mx-auto max-w-7xl px-4 pb-24 pt-20 sm:px-6 sm:pt-28 lg:px-8 lg:pt-32">
         <div className="mx-auto max-w-3xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
             <Sparkles className="h-3.5 w-3.5" />
             Built for university registrars & students
           </div>
-          <h1 className="mt-6 text-balance text-5xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+          <h1 className="font-display mt-6 text-balance text-6xl leading-[0.95] tracking-tight text-foreground sm:text-7xl lg:text-[88px]">
             The end of the
-            <span className="block bg-gradient-to-r from-accent to-emerald-300 bg-clip-text text-transparent">
+            <span className="block italic text-primary">
               no-dues paper trail.
             </span>
           </h1>
@@ -95,7 +84,7 @@ function Hero() {
             <Button
               asChild
               size="lg"
-              className="bg-accent text-accent-foreground shadow-[0_8px_30px_-8px] shadow-accent/40 hover:bg-accent/90"
+              className="bg-primary text-primary-foreground shadow-[0_10px_30px_-10px] shadow-primary/50 hover:bg-primary/90"
             >
               <Link to="/sign-up">
                 Start clearance
@@ -109,13 +98,13 @@ function Hero() {
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-accent" /> Tamper-proof PDF
+              <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Tamper-proof PDF
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <QrCode className="h-3.5 w-3.5 text-accent" /> QR verifiable
+              <QrCode className="h-3.5 w-3.5 text-primary" /> QR verifiable
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Workflow className="h-3.5 w-3.5 text-accent" /> Sequential approval
+              <Workflow className="h-3.5 w-3.5 text-primary" /> Sequential approval
             </span>
           </div>
         </div>
@@ -142,14 +131,14 @@ function Pipeline() {
         : "bg-muted text-muted-foreground ring-border";
 
   return (
-    <section id="how" className="border-y border-border/60 bg-surface/40">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mb-10 flex flex-col items-center text-center">
-          <p className="text-xs font-mono uppercase tracking-[0.2em] text-accent">
+    <section id="how" className="border-y border-border/60 bg-surface-elevated">
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mb-12 flex flex-col items-center text-center">
+          <p className="text-xs font-mono uppercase tracking-[0.22em] text-primary">
             How it works
           </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            One submission. A live, sequential chain.
+          <h2 className="font-display mt-3 text-4xl tracking-tight sm:text-5xl">
+            One submission. <span className="italic">A live, sequential chain.</span>
           </h2>
         </div>
 
@@ -220,13 +209,13 @@ function Features() {
 
   return (
     <section id="features" className="bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mb-12 max-w-2xl">
-          <p className="text-xs font-mono uppercase tracking-[0.2em] text-accent">
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mb-14 max-w-2xl">
+          <p className="text-xs font-mono uppercase tracking-[0.22em] text-primary">
             Capabilities
           </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Built end-to-end for the clearance lifecycle.
+          <h2 className="font-display mt-3 text-4xl tracking-tight sm:text-5xl">
+            Built end-to-end for the <span className="italic">clearance lifecycle.</span>
           </h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -235,8 +224,8 @@ function Features() {
               key={it.title}
               className="group rounded-2xl border border-border bg-card p-6 card-hover"
             >
-              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 ring-1 ring-accent/20">
-                <it.icon className="h-5 w-5 text-accent" />
+              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20">
+                <it.icon className="h-5 w-5 text-primary" />
               </div>
               <h3 className="text-base font-semibold">{it.title}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
@@ -280,14 +269,14 @@ function Roles() {
   ];
 
   return (
-    <section id="roles" className="border-t border-border/60 bg-surface/40">
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mb-12 max-w-2xl">
-          <p className="text-xs font-mono uppercase tracking-[0.2em] text-accent">
+    <section id="roles" className="border-t border-border/60 bg-surface-elevated">
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mb-14 max-w-2xl">
+          <p className="text-xs font-mono uppercase tracking-[0.22em] text-primary">
             Built for everyone
           </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            One platform. Three perspectives.
+          <h2 className="font-display mt-3 text-4xl tracking-tight sm:text-5xl">
+            One platform. <span className="italic">Three perspectives.</span>
           </h2>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
@@ -296,14 +285,14 @@ function Roles() {
               key={r.name}
               className="rounded-2xl border border-border bg-card p-6 card-hover"
             >
-              <h3 className="text-lg font-semibold">{r.name}</h3>
+              <h3 className="font-display text-2xl">{r.name}</h3>
               <ul className="mt-4 space-y-2.5">
                 {r.points.map((p) => (
                   <li
                     key={p}
                     className="flex items-start gap-2 text-sm text-muted-foreground"
                   >
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                     {p}
                   </li>
                 ))}
@@ -320,28 +309,33 @@ function Roles() {
 function CTA() {
   return (
     <section className="bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-3xl border border-accent/30 bg-gradient-to-br from-surface via-surface-elevated to-surface p-10 text-center sm:p-16">
-          <div className="absolute inset-0 -z-10 bg-grid opacity-30" aria-hidden />
-          <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            Ready to retire the signature queue?
+      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-[2rem] border border-primary/20 bg-primary p-10 text-center text-primary-foreground sm:p-20">
+          <div className="absolute inset-0 -z-0 bg-grid opacity-[0.08]" aria-hidden />
+          <h2 className="font-display relative text-balance text-4xl tracking-tight sm:text-6xl">
+            Ready to retire <span className="italic">the signature queue?</span>
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+          <p className="relative mx-auto mt-4 max-w-xl text-primary-foreground/75">
             Create an account in seconds. Choose your role and land directly on
             the dashboard built for it.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="relative mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
               asChild
               size="lg"
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
+              className="bg-background text-primary hover:bg-background/90"
             >
               <Link to="/sign-up">
                 Create account
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            >
               <Link to="/sign-in">I already have one</Link>
             </Button>
           </div>
