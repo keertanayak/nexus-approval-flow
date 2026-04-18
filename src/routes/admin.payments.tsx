@@ -75,7 +75,7 @@ function PaymentsSandbox() {
         amount: Number(active.amount),
         paidAt: new Date(),
       });
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
