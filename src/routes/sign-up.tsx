@@ -197,7 +197,7 @@ function SignUpPage() {
         <Button
           type="submit"
           disabled={submitting}
-          className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          className="w-full bg-[#035a80] text-white hover:bg-[#035a80]/90"
         >
           {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Create account
@@ -206,7 +206,7 @@ function SignUpPage() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link to="/sign-in" className="font-bold text-primary hover:text-primary/80 hover:underline">
+        <Link to="/sign-in" className="font-bold text-[#035a80] hover:text-[#035a80]/80 hover:underline">
           Sign in
         </Link>
       </p>
