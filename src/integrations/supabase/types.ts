@@ -14,16 +14,278 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          chain_of_custody: Json
+          created_at: string
+          current_stage: Database["public"]["Enums"]["application_stage"]
+          id: string
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          student_id: string
+          submission_date: string
+          updated_at: string
+        }
+        Insert: {
+          chain_of_custody?: Json
+          created_at?: string
+          current_stage?: Database["public"]["Enums"]["application_stage"]
+          id?: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          student_id: string
+          submission_date?: string
+          updated_at?: string
+        }
+        Update: {
+          chain_of_custody?: Json
+          created_at?: string
+          current_stage?: Database["public"]["Enums"]["application_stage"]
+          id?: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          student_id?: string
+          submission_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      approvals: {
+        Row: {
+          action: Database["public"]["Enums"]["approval_action"]
+          application_id: string
+          approver_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          stage: Database["public"]["Enums"]["application_stage"]
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["approval_action"]
+          application_id: string
+          approver_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          stage: Database["public"]["Enums"]["application_stage"]
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["approval_action"]
+          application_id?: string
+          approver_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          stage?: Database["public"]["Enums"]["application_stage"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approvals_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificates: {
+        Row: {
+          application_id: string
+          certificate_url: string | null
+          created_at: string
+          id: string
+          issued_at: string
+          qr_code_url: string | null
+        }
+        Insert: {
+          application_id: string
+          certificate_url?: string | null
+          created_at?: string
+          id?: string
+          issued_at?: string
+          qr_code_url?: string | null
+        }
+        Update: {
+          application_id?: string
+          certificate_url?: string | null
+          created_at?: string
+          id?: string
+          issued_at?: string
+          qr_code_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: true
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          application_id: string
+          created_at: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id: string
+          uploaded_by: string
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id?: string
+          uploaded_by: string
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          file_name?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dues: {
+        Row: {
+          amount: number
+          created_at: string
+          due_type: string
+          id: string
+          status: Database["public"]["Enums"]["due_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_type: string
+          id?: string
+          status?: Database["public"]["Enums"]["due_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_type?: string
+          id?: string
+          status?: Database["public"]["Enums"]["due_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dues_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          department: string
+          full_name: string
+          id: string
+          roll_no: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string
+          full_name: string
+          id?: string
+          roll_no?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          full_name?: string
+          id?: string
+          roll_no?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_roles: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "student" | "lab_incharge" | "hod" | "principal" | "admin"
+      application_stage: "lab_incharge" | "hod" | "principal" | "completed"
+      application_status:
+        | "submitted"
+        | "lab_cleared"
+        | "hod_cleared"
+        | "principal_approved"
+        | "rejected"
+      approval_action: "approve" | "flag" | "reject"
+      due_status: "pending" | "paid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +412,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["student", "lab_incharge", "hod", "principal", "admin"],
+      application_stage: ["lab_incharge", "hod", "principal", "completed"],
+      application_status: [
+        "submitted",
+        "lab_cleared",
+        "hod_cleared",
+        "principal_approved",
+        "rejected",
+      ],
+      approval_action: ["approve", "flag", "reject"],
+      due_status: ["pending", "paid"],
+    },
   },
 } as const
