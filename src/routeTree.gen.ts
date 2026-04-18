@@ -9,38 +9,121 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StudentDashboardRouteImport } from './routes/student.dashboard'
+import { Route as ApproverDashboardRouteImport } from './routes/approver.dashboard'
+import { Route as AdminDuesRouteImport } from './routes/admin.dues'
 
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentDashboardRoute = StudentDashboardRouteImport.update({
+  id: '/student/dashboard',
+  path: '/student/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApproverDashboardRoute = ApproverDashboardRouteImport.update({
+  id: '/approver/dashboard',
+  path: '/approver/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDuesRoute = AdminDuesRouteImport.update({
+  id: '/admin/dues',
+  path: '/admin/dues',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/admin/dues': typeof AdminDuesRoute
+  '/approver/dashboard': typeof ApproverDashboardRoute
+  '/student/dashboard': typeof StudentDashboardRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/admin/dues': typeof AdminDuesRoute
+  '/approver/dashboard': typeof ApproverDashboardRoute
+  '/student/dashboard': typeof StudentDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/sign-in': typeof SignInRoute
+  '/sign-up': typeof SignUpRoute
+  '/admin/dues': typeof AdminDuesRoute
+  '/approver/dashboard': typeof ApproverDashboardRoute
+  '/student/dashboard': typeof StudentDashboardRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/sign-in'
+    | '/sign-up'
+    | '/admin/dues'
+    | '/approver/dashboard'
+    | '/student/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/sign-in'
+    | '/sign-up'
+    | '/admin/dues'
+    | '/approver/dashboard'
+    | '/student/dashboard'
+  id:
+    | '__root__'
+    | '/'
+    | '/sign-in'
+    | '/sign-up'
+    | '/admin/dues'
+    | '/approver/dashboard'
+    | '/student/dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SignInRoute: typeof SignInRoute
+  SignUpRoute: typeof SignUpRoute
+  AdminDuesRoute: typeof AdminDuesRoute
+  ApproverDashboardRoute: typeof ApproverDashboardRoute
+  StudentDashboardRoute: typeof StudentDashboardRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +131,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student/dashboard': {
+      id: '/student/dashboard'
+      path: '/student/dashboard'
+      fullPath: '/student/dashboard'
+      preLoaderRoute: typeof StudentDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/approver/dashboard': {
+      id: '/approver/dashboard'
+      path: '/approver/dashboard'
+      fullPath: '/approver/dashboard'
+      preLoaderRoute: typeof ApproverDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/dues': {
+      id: '/admin/dues'
+      path: '/admin/dues'
+      fullPath: '/admin/dues'
+      preLoaderRoute: typeof AdminDuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SignInRoute: SignInRoute,
+  SignUpRoute: SignUpRoute,
+  AdminDuesRoute: AdminDuesRoute,
+  ApproverDashboardRoute: ApproverDashboardRoute,
+  StudentDashboardRoute: StudentDashboardRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
