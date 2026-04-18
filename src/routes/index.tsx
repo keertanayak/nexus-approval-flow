@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
-import heroImg from "@/assets/nexus-hero.jpg";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
