@@ -11,11 +11,11 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/15 ring-1 ring-accent/30 transition-transform group-hover:scale-105">
-            <Hexagon className="h-5 w-5 text-accent" strokeWidth={2.2} />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105">
+            <Hexagon className="h-5 w-5" strokeWidth={2.2} />
           </div>
           <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-tight">Nexus</div>
+            <div className="font-display text-xl tracking-tight">Nexus</div>
             <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
               Clearance Protocol
             </div>
@@ -54,7 +54,7 @@ export function SiteHeader() {
               <Button
                 asChild
                 size="sm"
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Link to="/sign-up">Get started</Link>
               </Button>
