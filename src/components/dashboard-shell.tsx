@@ -62,16 +62,16 @@ export function DashboardShell({
   return (
     <div className="min-h-screen bg-app-fade">
       {/* Mobile top bar */}
-      <div className="flex items-center justify-between bg-sidebar px-4 py-3 text-sidebar-foreground md:hidden">
+      <div className="glass-panel mx-3 mt-3 flex items-center justify-between rounded-xl px-4 py-3 text-sidebar-foreground md:hidden">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/10">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/16 ring-1 ring-white/25">
             <Hexagon className="h-4 w-4" strokeWidth={2.4} />
           </div>
           <span className="font-display text-lg">Nexus</span>
         </Link>
         <button
           onClick={() => setOpen((v) => !v)}
-          className="rounded-md p-2 hover:bg-white/10"
+          className="rounded-md p-2 transition-colors hover:bg-white/12"
           aria-label="Toggle navigation"
         >
           <Menu className="h-5 w-5" />
@@ -82,13 +82,13 @@ export function DashboardShell({
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 w-72 transform bg-sidebar text-sidebar-foreground transition-transform md:static md:translate-x-0",
+            "fixed inset-y-0 left-0 z-40 m-3 w-72 transform rounded-2xl border border-white/20 bg-sidebar text-sidebar-foreground shadow-[0_26px_48px_-28px_rgba(9,31,47,0.78)] backdrop-blur-2xl transition-transform md:static md:m-4 md:h-[calc(100vh-2rem)] md:translate-x-0",
             open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           )}
         >
-          <div className="flex h-full flex-col">
+          <div className="flex h-full flex-col rounded-2xl bg-gradient-to-b from-white/12 to-white/[0.04]">
             <Link to="/" className="hidden items-center gap-2.5 px-6 pt-6 md:flex">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/14 ring-1 ring-white/20">
                 <Hexagon className="h-5 w-5" strokeWidth={2.4} />
               </div>
               <div className="leading-tight">
@@ -112,9 +112,9 @@ export function DashboardShell({
                       to={it.to}
                       onClick={() => setOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                         active
-                          ? "bg-white/15 text-white"
+                          ? "bg-white/22 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)]"
                           : "text-white/80 hover:bg-white/10 hover:text-white",
                       )}
                     >
@@ -151,7 +151,7 @@ export function DashboardShell({
         {/* Backdrop for mobile */}
         {open && (
           <div
-            className="fixed inset-0 z-30 bg-black/40 md:hidden"
+            className="fixed inset-0 z-30 bg-slate-900/35 backdrop-blur-[2px] md:hidden"
             onClick={() => setOpen(false)}
           />
         )}
@@ -159,7 +159,7 @@ export function DashboardShell({
         {/* Main */}
         <main className="flex-1 overflow-x-hidden">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-10">
-            <header className="mb-8">
+            <header className="glass-panel mb-8 rounded-2xl px-6 py-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                 {roleLabel(role)}
               </p>
