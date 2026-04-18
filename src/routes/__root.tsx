@@ -81,11 +81,11 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <HeadContent />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="min-h-screen text-foreground antialiased">
         {children}
         <Scripts />
       </body>
@@ -97,16 +97,7 @@ function RootComponent() {
   return (
     <AuthProvider>
       <Outlet />
-      <Toaster
-        theme="dark"
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: "hsl(var(--surface))",
-            border: "1px solid hsl(var(--border))",
-          },
-        }}
-      />
+      <Toaster theme="light" position="top-right" richColors />
     </AuthProvider>
   );
 }
