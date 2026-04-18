@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import nexusimage from "@/assets/neximage.png";
+
 export const Route = createFileRoute("/sign-in")({
   head: () => ({
     meta: [
@@ -65,49 +67,51 @@ function SignInPage() {
     // The auth listener + effect above will redirect.
   };
 
-  return <AuthShell title="Welcome back" subtitle="Sign in to continue your clearance.">
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          autoComplete="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@university.edu"
-        />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-        />
-      </div>
-      <Button
-        type="submit"
-        disabled={submitting}
-        className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-      >
-        {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        Sign in
-      </Button>
-    </form>
+  return (
+    <AuthShell title="Welcome back" subtitle="Sign in to continue your clearance.">
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@university.edu"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+          />
+        </div>
+        <Button
+          type="submit"
+          disabled={submitting}
+          className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+        >
+          {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Sign in
+        </Button>
+      </form>
 
-    <p className="mt-6 text-center text-sm text-muted-foreground">
-      Don't have an account?{" "}
-      <Link to="/sign-up" className="font-medium text-accent hover:underline">
-        Create one
-      </Link>
-    </p>
-  </AuthShell>;
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Don't have an account?{" "}
+        <Link to="/sign-up" className="font-medium text-accent hover:underline">
+          Create one
+        </Link>
+      </p>
+    </AuthShell>
+  );
 }
 
 /* ============ Reusable Auth Shell (also used by sign-up) ============ */
@@ -122,20 +126,21 @@ export function AuthShell({
 }) {
   return (
     <div className="relative grid min-h-screen lg:grid-cols-2">
-      {/* Left: brand panel */}
-      <div className="relative hidden overflow-hidden bg-sidebar lg:block">
-        <div className="absolute inset-0 bg-grid opacity-40" aria-hidden />
-        <div className="relative flex h-full flex-col justify-between p-12 text-sidebar-foreground">
+      {/* Left: brand panel with local PNG background */}
+      <div className="relative hidden overflow-hidden lg:block">
+        <img
+          src={nexusimage}
+          alt="Background"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/40" aria-hidden /> {/* optional dark overlay */}
+        <div className="relative flex h-full flex-col justify-between p-12 text-white">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/15 ring-1 ring-accent/30">
               <Hexagon className="h-5 w-5 text-accent" strokeWidth={2.2} />
             </div>
-            <div>
-              <div className="text-base font-semibold">Nexus</div>
-              <div className="text-[10px] font-mono uppercase tracking-[0.18em] opacity-70">
-                Clearance Protocol
-              </div>
-            </div>
+            {/* Only Clearance Protocol text (Nexus is in the image itself) */}
+           
           </Link>
 
           <div>
@@ -143,7 +148,7 @@ export function AuthShell({
               "Submit once. Watch your clearance flow — lab in-charge to
               principal — without ever standing in a queue."
             </p>
-            <p className="mt-4 text-sm opacity-70">
+            <p className="mt-4 text-sm opacity-80">
               The Nexus pipeline · designed for modern universities
             </p>
           </div>
@@ -158,7 +163,7 @@ export function AuthShell({
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/15 ring-1 ring-accent/30">
                 <Hexagon className="h-5 w-5 text-accent" strokeWidth={2.2} />
               </div>
-              <span className="text-lg font-semibold">Nexus</span>
+              <span className="text-lg font-semibold">Clearance Protocol</span>
             </Link>
           </div>
           <div className="mb-6">
