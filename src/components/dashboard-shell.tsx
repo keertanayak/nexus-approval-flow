@@ -82,7 +82,7 @@ export function DashboardShell({
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 m-3 w-72 transform rounded-2xl border border-white/20 bg-sidebar text-sidebar-foreground shadow-[0_26px_48px_-28px_rgba(9,31,47,0.78)] backdrop-blur-2xl transition-transform md:static md:m-4 md:h-[calc(100vh-2rem)] md:translate-x-0",
+            "fixed inset-y-0 left-0 z-40 m-3 w-72 transform rounded-2xl border border-white/20 bg-sidebar text-sidebar-foreground shadow-[0_26px_48px_-28px_rgba(9,31,47,0.78)] backdrop-blur-2xl transition-transform md:sticky md:top-4 md:h-[calc(100vh-2rem)] md:translate-x-0",
             open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           )}
         >

@@ -94,7 +94,7 @@ function SignInPage() {
       <Button
         type="submit"
         disabled={submitting}
-        className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
       >
         {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         Sign in
@@ -103,7 +103,7 @@ function SignInPage() {
 
     <p className="mt-6 text-center text-sm text-muted-foreground">
       Don't have an account?{" "}
-      <Link to="/sign-up" className="font-medium text-accent hover:underline">
+      <Link to="/sign-up" className="font-bold text-primary hover:text-primary/80 hover:underline">
         Create one
       </Link>
     </p>
