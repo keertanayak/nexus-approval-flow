@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Hexagon, ShieldCheck, Loader2, ExternalLink } from "lucide-react";
+import { ShieldCheck, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -65,18 +65,20 @@ function CertificateVerify() {
     <div className="min-h-screen bg-app-fade">
       <header className="border-b border-border/60 bg-sidebar text-sidebar-foreground">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10">
-              <Hexagon className="h-5 w-5" strokeWidth={2.4} />
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-primary to-primary/60 text-primary-foreground shadow-lg shadow-primary/20 ring-1 ring-white/30 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+              <ShieldCheck className="h-6 w-6 drop-shadow-md" strokeWidth={2.5} />
             </div>
-            <div className="leading-tight">
-              <div className="font-display text-xl">Nexus</div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-white/60">
+            <div className="leading-tight text-white">
+              <div className="font-display text-2xl font-black tracking-tighter uppercase italic drop-shadow-sm">
+                Nexus
+              </div>
+              <div className="text-[10px] uppercase font-black tracking-[0.3em] text-white/60">
                 Public verification
               </div>
             </div>
           </Link>
-          <span className="text-xs text-white/70">Certificate ID · {id.slice(0, 8)}</span>
+          <span className="text-xs text-white/50 font-mono">CERT_ID: {id.slice(0, 8).toUpperCase()}</span>
         </div>
       </header>
 
