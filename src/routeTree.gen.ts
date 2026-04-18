@@ -12,8 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StudentSubmitRouteImport } from './routes/student.submit'
 import { Route as StudentDashboardRouteImport } from './routes/student.dashboard'
+import { Route as CertificateIdRouteImport } from './routes/certificate.$id'
 import { Route as ApproverDashboardRouteImport } from './routes/approver.dashboard'
+import { Route as ApiGenerateCertificateRouteImport } from './routes/api.generate-certificate'
+import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminDuesRouteImport } from './routes/admin.dues'
 
 const SignUpRoute = SignUpRouteImport.update({
@@ -31,14 +35,34 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentSubmitRoute = StudentSubmitRouteImport.update({
+  id: '/student/submit',
+  path: '/student/submit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudentDashboardRoute = StudentDashboardRouteImport.update({
   id: '/student/dashboard',
   path: '/student/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CertificateIdRoute = CertificateIdRouteImport.update({
+  id: '/certificate/$id',
+  path: '/certificate/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApproverDashboardRoute = ApproverDashboardRouteImport.update({
   id: '/approver/dashboard',
   path: '/approver/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGenerateCertificateRoute = ApiGenerateCertificateRouteImport.update({
+  id: '/api/generate-certificate',
+  path: '/api/generate-certificate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
+  id: '/admin/payments',
+  path: '/admin/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminDuesRoute = AdminDuesRouteImport.update({
@@ -52,16 +76,24 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/admin/dues': typeof AdminDuesRoute
+  '/admin/payments': typeof AdminPaymentsRoute
+  '/api/generate-certificate': typeof ApiGenerateCertificateRoute
   '/approver/dashboard': typeof ApproverDashboardRoute
+  '/certificate/$id': typeof CertificateIdRoute
   '/student/dashboard': typeof StudentDashboardRoute
+  '/student/submit': typeof StudentSubmitRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/admin/dues': typeof AdminDuesRoute
+  '/admin/payments': typeof AdminPaymentsRoute
+  '/api/generate-certificate': typeof ApiGenerateCertificateRoute
   '/approver/dashboard': typeof ApproverDashboardRoute
+  '/certificate/$id': typeof CertificateIdRoute
   '/student/dashboard': typeof StudentDashboardRoute
+  '/student/submit': typeof StudentSubmitRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,8 +101,12 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/admin/dues': typeof AdminDuesRoute
+  '/admin/payments': typeof AdminPaymentsRoute
+  '/api/generate-certificate': typeof ApiGenerateCertificateRoute
   '/approver/dashboard': typeof ApproverDashboardRoute
+  '/certificate/$id': typeof CertificateIdRoute
   '/student/dashboard': typeof StudentDashboardRoute
+  '/student/submit': typeof StudentSubmitRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -79,24 +115,36 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/admin/dues'
+    | '/admin/payments'
+    | '/api/generate-certificate'
     | '/approver/dashboard'
+    | '/certificate/$id'
     | '/student/dashboard'
+    | '/student/submit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/sign-in'
     | '/sign-up'
     | '/admin/dues'
+    | '/admin/payments'
+    | '/api/generate-certificate'
     | '/approver/dashboard'
+    | '/certificate/$id'
     | '/student/dashboard'
+    | '/student/submit'
   id:
     | '__root__'
     | '/'
     | '/sign-in'
     | '/sign-up'
     | '/admin/dues'
+    | '/admin/payments'
+    | '/api/generate-certificate'
     | '/approver/dashboard'
+    | '/certificate/$id'
     | '/student/dashboard'
+    | '/student/submit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -104,8 +152,12 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   AdminDuesRoute: typeof AdminDuesRoute
+  AdminPaymentsRoute: typeof AdminPaymentsRoute
+  ApiGenerateCertificateRoute: typeof ApiGenerateCertificateRoute
   ApproverDashboardRoute: typeof ApproverDashboardRoute
+  CertificateIdRoute: typeof CertificateIdRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
+  StudentSubmitRoute: typeof StudentSubmitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -131,6 +183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student/submit': {
+      id: '/student/submit'
+      path: '/student/submit'
+      fullPath: '/student/submit'
+      preLoaderRoute: typeof StudentSubmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/student/dashboard': {
       id: '/student/dashboard'
       path: '/student/dashboard'
@@ -138,11 +197,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/certificate/$id': {
+      id: '/certificate/$id'
+      path: '/certificate/$id'
+      fullPath: '/certificate/$id'
+      preLoaderRoute: typeof CertificateIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/approver/dashboard': {
       id: '/approver/dashboard'
       path: '/approver/dashboard'
       fullPath: '/approver/dashboard'
       preLoaderRoute: typeof ApproverDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/generate-certificate': {
+      id: '/api/generate-certificate'
+      path: '/api/generate-certificate'
+      fullPath: '/api/generate-certificate'
+      preLoaderRoute: typeof ApiGenerateCertificateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/payments': {
+      id: '/admin/payments'
+      path: '/admin/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AdminPaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/dues': {
@@ -160,9 +240,22 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   AdminDuesRoute: AdminDuesRoute,
+  AdminPaymentsRoute: AdminPaymentsRoute,
+  ApiGenerateCertificateRoute: ApiGenerateCertificateRoute,
   ApproverDashboardRoute: ApproverDashboardRoute,
+  CertificateIdRoute: CertificateIdRoute,
   StudentDashboardRoute: StudentDashboardRoute,
+  StudentSubmitRoute: StudentSubmitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

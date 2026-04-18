@@ -2,22 +2,22 @@
 @source "../src";
 @import "tw-animate-css";
 
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap");
-
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
  * NEXUS — Automated Clearance Protocol
- * Design System — v2
- * Palette: paper-white surfaces, Prussian Blue accent (#003153),
- * Instrument Serif display + Plus Jakarta Sans body.
+ * Design System — v3
+ * Theme: White → Prussian Blue (#003153) gradient.
+ * Sidebar/header: solid Prussian blue. Cards: white w/ light borders.
+ * Accent: Prussian Blue. Success (heatmap "cleared"): #10b981.
+ * Font: Inter (loaded in __root.tsx).
  * ============================================================ */
 
 @theme inline {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system,
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Instrument Serif", ui-serif, Georgia, "Times New Roman", serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -47,7 +47,6 @@
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
 
-  /* Status palette */
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -55,7 +54,6 @@
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
 
-  /* Surfaces */
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
   --color-sidebar: var(--sidebar);
@@ -68,12 +66,11 @@
   --color-chart-5: var(--chart-5);
 }
 
-/* ============ LIGHT MODE (paper white + Prussian blue) ============ */
-/* Prussian Blue #003153 ≈ oklch(0.30 0.085 245) */
+/* ============ LIGHT MODE — paper white + Prussian blue fade ============ */
 :root {
   --radius: 0.875rem;
 
-  --background: oklch(0.995 0.002 240);          /* near-white paper */
+  --background: oklch(1 0 0);                    /* white */
   --foreground: oklch(0.20 0.04 245);            /* deep ink */
 
   --surface: oklch(1 0 0);
@@ -85,87 +82,73 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.20 0.04 245);
 
-  /* Prussian Blue as primary */
-  --primary: oklch(0.30 0.085 245);
+  --primary: oklch(0.30 0.085 245);              /* Prussian Blue #003153 */
   --primary-foreground: oklch(0.99 0.003 240);
 
   --secondary: oklch(0.96 0.008 240);
   --secondary-foreground: oklch(0.30 0.085 245);
 
   --muted: oklch(0.965 0.006 240);
-  --muted-foreground: oklch(0.48 0.025 245);
+  --muted-foreground: oklch(0.46 0.025 245);
 
-  /* Accent = brighter Prussian highlight */
-  --accent: oklch(0.42 0.11 245);
+  --accent: oklch(0.30 0.085 245);
   --accent-foreground: oklch(0.99 0.003 240);
 
   --destructive: oklch(0.58 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
 
-  --success: oklch(0.55 0.13 165);
-  --success-foreground: oklch(0.99 0.003 240);
-  --warning: oklch(0.74 0.15 75);
+  --success: oklch(0.68 0.15 162);               /* #10b981 emerald — for "cleared" */
+  --success-foreground: oklch(0.18 0.05 162);
+  --warning: oklch(0.78 0.15 75);
   --warning-foreground: oklch(0.22 0.05 70);
   --danger: oklch(0.58 0.22 25);
   --danger-foreground: oklch(0.99 0 0);
 
-  --border: oklch(0.9 0.01 240);
-  --input: oklch(0.9 0.01 240);
+  --border: oklch(0.92 0.008 240);
+  --input: oklch(0.92 0.008 240);
   --ring: oklch(0.30 0.085 245);
 
-  --sidebar: oklch(0.30 0.085 245);
-  --sidebar-foreground: oklch(0.97 0.005 240);
+  --sidebar: oklch(0.30 0.085 245);              /* solid Prussian */
+  --sidebar-foreground: oklch(0.98 0.005 240);
 
   --chart-1: oklch(0.30 0.085 245);
   --chart-2: oklch(0.55 0.12 245);
-  --chart-3: oklch(0.74 0.15 75);
+  --chart-3: oklch(0.78 0.15 75);
   --chart-4: oklch(0.58 0.22 25);
-  --chart-5: oklch(0.55 0.13 165);
+  --chart-5: oklch(0.68 0.15 162);
 }
 
-/* ============ DARK MODE (deep Prussian) ============ */
+/* Dark mode mirrors the light tokens (we render light-only by default). */
 .dark {
   --background: oklch(0.18 0.045 245);
   --foreground: oklch(0.97 0.006 240);
-
   --surface: oklch(0.23 0.05 245);
   --surface-elevated: oklch(0.27 0.055 245);
-
   --card: oklch(0.23 0.05 245);
   --card-foreground: oklch(0.97 0.006 240);
-
   --popover: oklch(0.23 0.05 245);
   --popover-foreground: oklch(0.97 0.006 240);
-
   --primary: oklch(0.97 0.006 240);
   --primary-foreground: oklch(0.20 0.05 245);
-
   --secondary: oklch(0.30 0.06 245);
   --secondary-foreground: oklch(0.97 0.006 240);
-
   --muted: oklch(0.30 0.06 245);
   --muted-foreground: oklch(0.72 0.025 240);
-
   --accent: oklch(0.62 0.13 245);
   --accent-foreground: oklch(0.16 0.04 245);
-
   --destructive: oklch(0.65 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
-
-  --success: oklch(0.65 0.14 165);
-  --success-foreground: oklch(0.16 0.05 165);
+  --success: oklch(0.68 0.15 162);
+  --success-foreground: oklch(0.16 0.05 162);
   --warning: oklch(0.78 0.15 75);
   --warning-foreground: oklch(0.20 0.05 70);
   --danger: oklch(0.65 0.22 25);
   --danger-foreground: oklch(0.99 0 0);
-
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 14%);
   --ring: oklch(0.62 0.13 245);
-
   --sidebar: oklch(0.16 0.04 245);
   --sidebar-foreground: oklch(0.96 0.006 240);
-
   --chart-1: oklch(0.62 0.13 245);
   --chart-2: oklch(0.78 0.15 75);
   --chart-3: oklch(0.65 0.22 25);
@@ -174,9 +157,7 @@
 }
 
 @layer base {
-  * {
-    border-color: var(--color-border);
-  }
+  * { border-color: var(--color-border); }
 
   html {
     font-family: var(--font-sans);
@@ -185,31 +166,36 @@
   }
 
   body {
-    background-color: var(--color-background);
     color: var(--color-foreground);
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Subtle white → Prussian blue fade across the whole app */
+    background-color: #ffffff;
+    background-image: linear-gradient(
+      to bottom right,
+      #ffffff 0%,
+      #ffffff 35%,
+      rgba(0, 49, 83, 0.10) 70%,
+      rgba(0, 49, 83, 0.22) 100%
+    );
+    background-attachment: fixed;
+    min-height: 100vh;
   }
 
   ::selection {
-    background-color: oklch(0.74 0.16 162 / 0.25);
+    background-color: oklch(0.30 0.085 245 / 0.20);
   }
 }
 
 /* ============ UTILITY CLASSES ============ */
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
 
   .font-display {
     font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: -0.01em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 
-  .font-mono {
-    font-family: var(--font-mono);
-  }
+  .font-mono { font-family: var(--font-mono); }
 
   .bg-grid {
     background-image:
@@ -221,8 +207,19 @@
   .bg-radial-prussian {
     background-image: radial-gradient(
       ellipse 80% 60% at 70% 40%,
-      oklch(0.30 0.085 245 / 0.18),
+      oklch(0.30 0.085 245 / 0.10),
       transparent 70%
+    );
+  }
+
+  /* Page-level fade used by inner dashboards */
+  .bg-app-fade {
+    background-image: linear-gradient(
+      to bottom right,
+      #ffffff 0%,
+      #ffffff 30%,
+      rgba(0, 49, 83, 0.08) 65%,
+      rgba(0, 49, 83, 0.20) 100%
     );
   }
 
@@ -230,18 +227,13 @@
     box-shadow: 0 0 0 1px oklch(0.30 0.085 245 / 0.2),
       0 12px 40px -12px oklch(0.30 0.085 245 / 0.45);
   }
-
-  /* Backwards-compat alias (some components still reference glow-emerald) */
-  .glow-emerald {
+  .glow-emerald { /* alias kept for backward compat */
     box-shadow: 0 0 0 1px oklch(0.30 0.085 245 / 0.2),
       0 12px 40px -12px oklch(0.30 0.085 245 / 0.45);
   }
 
   .card-hover {
-    transition:
-      transform 200ms ease,
-      box-shadow 200ms ease,
-      border-color 200ms ease;
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
   }
   .card-hover:hover {
     transform: translateY(-1px);

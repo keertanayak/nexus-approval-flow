@@ -1,96 +1,291 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { Hexagon, Construction, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Download, FileUp, Loader2 } from "lucide-react";
+import JSZip from "jszip";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { StatusHeatmap } from "@/components/status-heatmap";
+import { Button } from "@/components/ui/button";
+import { deriveHeatmap, stageLabel } from "@/lib/clearance";
+import type { Database } from "@/integrations/supabase/types";
+
+type Application = Database["public"]["Tables"]["applications"]["Row"];
+type Document = Database["public"]["Tables"]["documents"]["Row"];
+type Due = Database["public"]["Tables"]["dues"]["Row"];
 
 export const Route = createFileRoute("/student/dashboard")({
   component: StudentDashboard,
 });
 
 function StudentDashboard() {
-  const { profile, loading, signOut } = useAuth();
+  const { profile } = useAuth();
+  const [apps, setApps] = useState<Application[]>([]);
+  const [dues, setDues] = useState<Due[]>([]);
+  const [docs, setDocs] = useState<Document[]>([]);
+  const [zipping, setZipping] = useState(false);
+
+  const loadAll = async () => {
+    if (!profile) return;
+    const [appsRes, duesRes] = await Promise.all([
+      supabase
+        .from("applications")
+        .select("*")
+        .eq("student_id", profile.id)
+        .order("created_at", { ascending: false }),
+      supabase.from("dues").select("*").eq("student_id", profile.id),
+    ]);
+    setApps(appsRes.data ?? []);
+    setDues(duesRes.data ?? []);
+
+    const ids = (appsRes.data ?? []).map((a) => a.id);
+    if (ids.length) {
+      const { data: docRows } = await supabase
+        .from("documents")
+        .select("*")
+        .in("application_id", ids);
+      setDocs(docRows ?? []);
+    } else {
+      setDocs([]);
+    }
+  };
+
+  useEffect(() => {
+    loadAll();
+    const t = setInterval(loadAll, 5000); // live refresh
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id]);
+
+  const latest = apps[0];
+  const pendingDues = useMemo(() => dues.filter((d) => d.status === "pending"), [dues]);
+
+  const heatmap = useMemo(
+    () =>
+      deriveHeatmap({
+        status: latest?.status ?? null,
+        currentStage: latest?.current_stage ?? null,
+        hasPendingDues: pendingDues.length > 0,
+      }),
+    [latest, pendingDues],
+  );
+
+  const downloadZip = async () => {
+    if (!profile) return;
+    setZipping(true);
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder("nexus-locker")!;
+
+      // Profile json
+      folder.file(
+        "profile.json",
+        JSON.stringify(
+          {
+            name: profile.full_name,
+            roll_no: profile.roll_no,
+            department: profile.department,
+            applications: apps.map((a) => ({
+              id: a.id,
+              status: a.status,
+              current_stage: a.current_stage,
+              submitted_at: a.submission_date,
+            })),
+          },
+          null,
+          2,
+        ),
+      );
+
+      // Documents
+      for (const d of docs) {
+        try {
+          const path = d.file_url; // stored as bucket path
+          const { data, error } = await supabase.storage
+            .from("nexus-documents")
+            .download(path);
+          if (error || !data) continue;
+          const buf = await data.arrayBuffer();
+          folder.file(`documents/${d.file_name}`, buf);
+        } catch (e) {
+          // skip individual file failures
+        }
+      }
+
+      // Certificates
+      for (const a of apps) {
+        const { data: cert } = await supabase
+          .from("certificates")
+          .select("*")
+          .eq("application_id", a.id)
+          .maybeSingle();
+        if (cert?.certificate_url) {
+          try {
+            const resp = await fetch(cert.certificate_url);
+            if (resp.ok) {
+              const buf = await resp.arrayBuffer();
+              folder.file(`certificates/certificate-${a.id}.pdf`, buf);
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `nexus-locker-${profile.roll_no ?? profile.full_name}.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success("Digital locker downloaded");
+    } catch (e) {
+      toast.error("Could not build ZIP");
+    } finally {
+      setZipping(false);
+    }
+  };
+
   return (
-    <PlaceholderDashboard
-      role="Student"
-      greeting={profile ? `Welcome, ${profile.full_name}` : "Welcome"}
-      subtitle={profile?.roll_no ? `Roll · ${profile.roll_no}` : undefined}
-      onSignOut={signOut}
-      loading={loading}
-    />
+    <DashboardShell
+      title={`Welcome, ${profile?.full_name ?? ""}`}
+      subtitle={
+        profile?.roll_no
+          ? `Roll · ${profile.roll_no}  ·  ${profile.department}`
+          : profile?.department
+      }
+    >
+      {/* Welcome / quick actions */}
+      <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+            My clearance
+          </p>
+          <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">
+                {latest
+                  ? latest.status === "principal_approved"
+                    ? "Cleared"
+                    : latest.status === "rejected"
+                      ? "Rejected"
+                      : `In review · ${stageLabel(latest.current_stage)}`
+                  : "No active application"}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {pendingDues.length > 0
+                  ? `${pendingDues.length} pending due${pendingDues.length === 1 ? "" : "s"} · clearance is blocked.`
+                  : "Submit your documents to start the chain."}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="lg" disabled={!!latest}>
+                <Link to="/student/submit">
+                  <FileUp className="h-4 w-4" />
+                  Submit application
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={downloadZip}
+                disabled={zipping || apps.length === 0}
+              >
+                {zipping ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Digital locker ZIP
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Heatmap */}
+      <div className="mt-6">
+        <StatusHeatmap stages={heatmap} />
+      </div>
+
+      {/* Pending dues */}
+      {pendingDues.length > 0 && (
+        <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
+          <h3 className="text-sm font-semibold text-destructive">
+            Pending dues blocking clearance
+          </h3>
+          <ul className="mt-3 divide-y divide-destructive/10 text-sm">
+            {pendingDues.map((d) => (
+              <li key={d.id} className="flex items-center justify-between py-2">
+                <span className="font-medium text-foreground">{d.due_type}</span>
+                <span className="font-mono text-foreground">₹ {Number(d.amount).toFixed(2)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* My applications */}
+      <div className="mt-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <h3 className="text-base font-semibold">My applications</h3>
+        {apps.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            You haven't submitted an application yet.
+          </p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                  <th className="py-2 pr-3">Submitted</th>
+                  <th className="py-2 pr-3">Stage</th>
+                  <th className="py-2 pr-3">Status</th>
+                  <th className="py-2 pr-3">ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {apps.map((a) => (
+                  <tr key={a.id} className="border-b border-border/60 last:border-0">
+                    <td className="py-2.5 pr-3">
+                      {new Date(a.submission_date).toLocaleString()}
+                    </td>
+                    <td className="py-2.5 pr-3">{stageLabel(a.current_stage)}</td>
+                    <td className="py-2.5 pr-3">
+                      <StatusBadge status={a.status} />
+                    </td>
+                    <td className="py-2.5 pr-3 font-mono text-xs text-muted-foreground">
+                      {a.id.slice(0, 8)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </DashboardShell>
   );
 }
 
-/* shared placeholder used by dashboards we'll build next */
-export function PlaceholderDashboard({
-  role,
-  greeting,
-  subtitle,
-  onSignOut,
-  loading,
-}: {
-  role: string;
-  greeting: string;
-  subtitle?: string;
-  onSignOut: () => Promise<void>;
-  loading?: boolean;
-}) {
+function StatusBadge({ status }: { status: Application["status"] }) {
+  const map: Record<Application["status"], { className: string; label: string }> = {
+    submitted: { className: "bg-warning/15 text-warning ring-warning/30", label: "Submitted" },
+    lab_cleared: { className: "bg-warning/15 text-warning ring-warning/30", label: "Lab cleared" },
+    hod_cleared: { className: "bg-warning/15 text-warning ring-warning/30", label: "HOD cleared" },
+    principal_approved: {
+      className: "bg-success/15 text-success ring-success/30",
+      label: "Approved",
+    },
+    rejected: { className: "bg-destructive/15 text-destructive ring-destructive/30", label: "Rejected" },
+  };
+  const m = map[status];
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border/60 bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/15 ring-1 ring-accent/30">
-              <Hexagon className="h-5 w-5 text-accent" strokeWidth={2.2} />
-            </div>
-            <div className="leading-tight">
-              <div className="text-sm font-semibold">Nexus</div>
-              <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
-                {role} Dashboard
-              </div>
-            </div>
-          </div>
-          <Button onClick={() => onSignOut()} size="sm" variant="outline">
-            Sign out
-          </Button>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-10">
-          <p className="text-xs font-mono uppercase tracking-[0.2em] text-accent">
-            {role}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            {loading ? "Loading…" : greeting}
-          </h1>
-          {subtitle ? (
-            <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
-          ) : null}
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card p-10 text-center">
-          <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 ring-1 ring-accent/20">
-            <Construction className="h-6 w-6 text-accent" />
-          </div>
-          <h2 className="mt-5 text-xl font-semibold">
-            Dashboard coming next
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            The design system, auth and routing are wired. We'll build the live
-            status heatmap, document submission and approver action panels in
-            the next iteration.
-          </p>
-          <div className="mt-6">
-            <Button asChild variant="outline">
-              <Link to="/">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to home
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </main>
-    </div>
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ${m.className}`}
+    >
+      {m.label}
+    </span>
   );
 }
