@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { Download, FileUp, Loader2 } from "lucide-react";
+import { CreditCard, Download, FileUp, Loader2 } from "lucide-react";
 import JSZip from "jszip";
 import { toast } from "sonner";
 import { useAuth, dashboardPathForRole, primaryRole } from "@/lib/auth";
@@ -48,6 +48,25 @@ function StudentDashboard() {
   const [dues, setDues] = useState<Due[]>([]);
   const [docs, setDocs] = useState<Document[]>([]);
   const [zipping, setZipping] = useState(false);
+  const [payingDueId, setPayingDueId] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+  const stripeReady = Boolean(stripeKey && stripeKey.startsWith("pk_test_"));
+
+  const authHeaders = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      throw new Error("Session expired. Please sign in again.");
+    }
+
+    return {
+      "content-type": "application/json",
+      authorization: `Bearer ${session.access_token}`,
+    };
+  };
 
   const loadAll = async () => {
     if (!profile) return;
@@ -93,6 +112,96 @@ function StudentDashboard() {
       }),
     [latest, pendingDues],
   );
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    const dueId = params.get("due_id");
+    const sessionId = params.get("session_id");
+
+    if (!payment) return;
+
+    const clearSearch = () => {
+      window.history.replaceState({}, "", "/student/dashboard");
+    };
+
+    if (payment === "cancelled") {
+      toast.info("Payment was cancelled");
+      clearSearch();
+      return;
+    }
+
+    if (payment !== "success" || !dueId || !sessionId) {
+      toast.error("Invalid payment return state");
+      clearSearch();
+      return;
+    }
+
+    const confirmPayment = async () => {
+      setConfirming(true);
+      try {
+        const headers = await authHeaders();
+        const resp = await fetch("/api/stripe/confirm-payment", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ due_id: dueId, session_id: sessionId }),
+        });
+
+        if (!resp.ok) {
+          const body = (await resp.json().catch(() => null)) as { error?: string } | null;
+          if (resp.status === 401) {
+            console.error("Unauthorized error during payment confirmation", body);
+          }
+          throw new Error(body?.error ?? "Could not confirm Stripe payment");
+        }
+
+        toast.success("Payment confirmed. Clearance block updated.");
+        await loadAll();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Payment confirmation failed";
+        toast.error(msg);
+      } finally {
+        setConfirming(false);
+        clearSearch();
+      }
+    };
+
+    confirmPayment();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const payDue = async (dueId: string) => {
+    if (!stripeReady) {
+      toast.error("Stripe sandbox key is missing or invalid. Expected pk_test_ key.");
+      return;
+    }
+
+    setPayingDueId(dueId);
+    try {
+      const headers = await authHeaders();
+      const resp = await fetch("/api/stripe/create-checkout", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ due_id: dueId }),
+      });
+
+      if (!resp.ok) {
+        const body = (await resp.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "Failed to create Stripe checkout session");
+      }
+
+      const data = (await resp.json()) as { checkout_url?: string };
+      if (!data.checkout_url) {
+        throw new Error("Missing checkout URL from server");
+      }
+
+      window.location.href = data.checkout_url;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Payment failed";
+      toast.error(msg);
+      setPayingDueId(null);
+    }
+  };
 
   const downloadZip = async () => {
     if (!profile) return;
@@ -237,11 +346,37 @@ function StudentDashboard() {
           <h3 className="text-sm font-semibold text-destructive">
             Pending dues blocking clearance
           </h3>
+          {confirming && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Verifying Stripe payment and updating due status...
+            </p>
+          )}
+          {!stripeReady && (
+            <p className="mt-2 text-xs text-destructive">
+              Stripe sandbox is not configured correctly. Expected a publishable key starting with
+              {" "}
+              <span className="font-mono">pk_test_</span>.
+            </p>
+          )}
           <ul className="mt-3 divide-y divide-destructive/10 text-sm">
             {pendingDues.map((d) => (
               <li key={d.id} className="flex items-center justify-between py-2">
-                <span className="font-medium text-foreground">{d.due_type}</span>
-                <span className="font-mono text-foreground">₹ {Number(d.amount).toFixed(2)}</span>
+                <div>
+                  <p className="font-medium text-foreground">{d.due_type}</p>
+                  <p className="font-mono text-foreground">₹ {Number(d.amount).toFixed(2)}</p>
+                </div>
+                <Button
+                  size="sm"
+                  disabled={!stripeReady || confirming || payingDueId === d.id}
+                  onClick={() => payDue(d.id)}
+                >
+                  {payingDueId === d.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CreditCard className="h-4 w-4" />
+                  )}
+                  Pay now
+                </Button>
               </li>
             ))}
           </ul>

@@ -19,6 +19,8 @@ import { Route as ApproverDashboardRouteImport } from './routes/approver.dashboa
 import { Route as ApiGenerateCertificateRouteImport } from './routes/api.generate-certificate'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminDuesRouteImport } from './routes/admin.dues'
+import { Route as ApiStripeCreateCheckoutRouteImport } from './routes/api.stripe.create-checkout'
+import { Route as ApiStripeConfirmPaymentRouteImport } from './routes/api.stripe.confirm-payment'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -70,6 +72,16 @@ const AdminDuesRoute = AdminDuesRouteImport.update({
   path: '/admin/dues',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStripeCreateCheckoutRoute = ApiStripeCreateCheckoutRouteImport.update({
+  id: '/api/stripe/create-checkout',
+  path: '/api/stripe/create-checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeConfirmPaymentRoute = ApiStripeConfirmPaymentRouteImport.update({
+  id: '/api/stripe/confirm-payment',
+  path: '/api/stripe/confirm-payment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +94,8 @@ export interface FileRoutesByFullPath {
   '/certificate/$id': typeof CertificateIdRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/submit': typeof StudentSubmitRoute
+  '/api/stripe/confirm-payment': typeof ApiStripeConfirmPaymentRoute
+  '/api/stripe/create-checkout': typeof ApiStripeCreateCheckoutRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +108,8 @@ export interface FileRoutesByTo {
   '/certificate/$id': typeof CertificateIdRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/submit': typeof StudentSubmitRoute
+  '/api/stripe/confirm-payment': typeof ApiStripeConfirmPaymentRoute
+  '/api/stripe/create-checkout': typeof ApiStripeCreateCheckoutRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +123,8 @@ export interface FileRoutesById {
   '/certificate/$id': typeof CertificateIdRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/submit': typeof StudentSubmitRoute
+  '/api/stripe/confirm-payment': typeof ApiStripeConfirmPaymentRoute
+  '/api/stripe/create-checkout': typeof ApiStripeCreateCheckoutRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +139,8 @@ export interface FileRouteTypes {
     | '/certificate/$id'
     | '/student/dashboard'
     | '/student/submit'
+    | '/api/stripe/confirm-payment'
+    | '/api/stripe/create-checkout'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +153,8 @@ export interface FileRouteTypes {
     | '/certificate/$id'
     | '/student/dashboard'
     | '/student/submit'
+    | '/api/stripe/confirm-payment'
+    | '/api/stripe/create-checkout'
   id:
     | '__root__'
     | '/'
@@ -145,6 +167,8 @@ export interface FileRouteTypes {
     | '/certificate/$id'
     | '/student/dashboard'
     | '/student/submit'
+    | '/api/stripe/confirm-payment'
+    | '/api/stripe/create-checkout'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +182,8 @@ export interface RootRouteChildren {
   CertificateIdRoute: typeof CertificateIdRoute
   StudentDashboardRoute: typeof StudentDashboardRoute
   StudentSubmitRoute: typeof StudentSubmitRoute
+  ApiStripeConfirmPaymentRoute: typeof ApiStripeConfirmPaymentRoute
+  ApiStripeCreateCheckoutRoute: typeof ApiStripeCreateCheckoutRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +258,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDuesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/stripe/create-checkout': {
+      id: '/api/stripe/create-checkout'
+      path: '/api/stripe/create-checkout'
+      fullPath: '/api/stripe/create-checkout'
+      preLoaderRoute: typeof ApiStripeCreateCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe/confirm-payment': {
+      id: '/api/stripe/confirm-payment'
+      path: '/api/stripe/confirm-payment'
+      fullPath: '/api/stripe/confirm-payment'
+      preLoaderRoute: typeof ApiStripeConfirmPaymentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,6 +286,8 @@ const rootRouteChildren: RootRouteChildren = {
   CertificateIdRoute: CertificateIdRoute,
   StudentDashboardRoute: StudentDashboardRoute,
   StudentSubmitRoute: StudentSubmitRoute,
+  ApiStripeConfirmPaymentRoute: ApiStripeConfirmPaymentRoute,
+  ApiStripeCreateCheckoutRoute: ApiStripeCreateCheckoutRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

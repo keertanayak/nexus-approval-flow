@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { supabase } from "@/integrations/supabase/client";
 import { primaryRole, type AppRole } from "@/lib/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -52,6 +51,24 @@ function PaymentsSandbox() {
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<(Due & { student?: Profile }) | null>(null);
   const [paying, setPaying] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const handledReturnRef = useRef(false);
+  const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+  const stripeReady = Boolean(stripeKey && stripeKey.startsWith("pk_test_"));
+  const stripeGatewayLabel = !stripeKey ? "Missing key" : stripeReady ? "Stripe test" : "Invalid key";
+
+  const authHeaders = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error("Session expired. Please sign in again.");
+    }
+    return {
+      "content-type": "application/json",
+      authorization: `Bearer ${session.access_token}`,
+    };
+  };
 
   const load = async () => {
     setLoading(true);
@@ -74,6 +91,62 @@ function PaymentsSandbox() {
     load();
   }, []);
 
+  useEffect(() => {
+    if (handledReturnRef.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    const dueId = params.get("due_id");
+    const sessionId = params.get("session_id");
+
+    if (!payment) return;
+    handledReturnRef.current = true;
+
+    const clearSearch = () => {
+      window.history.replaceState({}, "", "/admin/payments");
+    };
+
+    if (payment === "cancelled") {
+      toast.info("Payment was cancelled");
+      clearSearch();
+      return;
+    }
+
+    if (payment !== "success" || !dueId || !sessionId) {
+      toast.error("Invalid payment return state");
+      clearSearch();
+      return;
+    }
+
+    const confirmPayment = async () => {
+      setConfirming(true);
+      try {
+        const headers = await authHeaders();
+        const resp = await fetch("/api/stripe/confirm-payment", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ due_id: dueId, session_id: sessionId }),
+        });
+
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(text || "Could not confirm Stripe payment");
+        }
+
+        toast.success("Payment confirmed · due marked as paid");
+        await load();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Payment confirmation failed";
+        toast.error(msg);
+      } finally {
+        setConfirming(false);
+        clearSearch();
+      }
+    };
+
+    confirmPayment();
+  }, []);
+
   const totals = useMemo(() => {
     const sum = dues.reduce((acc, d) => acc + Number(d.amount), 0);
     return { count: dues.length, sum };
@@ -81,33 +154,32 @@ function PaymentsSandbox() {
 
   const pay = async () => {
     if (!active) return;
+    if (!stripeReady) {
+      toast.error("Stripe sandbox key is missing or invalid. Expected pk_test_ key.");
+      return;
+    }
+
     setPaying(true);
     try {
-      // Mark due as paid
-      const { error } = await supabase.from("dues").update({ status: "paid" }).eq("id", active.id);
-      if (error) throw error;
-
-      // Generate receipt PDF
-      const pdfBytes = await buildReceipt({
-        receiptId: `R-${active.id.slice(0, 8).toUpperCase()}`,
-        studentName: active.student?.full_name ?? "—",
-        rollNo: active.student?.roll_no ?? "—",
-        department: active.student?.department ?? "—",
-        dueType: active.due_type,
-        amount: Number(active.amount),
-        paidAt: new Date(),
+      const headers = await authHeaders();
+      const resp = await fetch("/api/stripe/create-checkout", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ due_id: active.id }),
       });
-      const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `receipt-${active.id.slice(0, 8)}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
 
-      toast.success("Payment recorded · receipt downloaded");
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text || "Failed to create Stripe checkout session");
+      }
+
+      const data = (await resp.json()) as { checkout_url?: string };
+      if (!data.checkout_url) {
+        throw new Error("Missing checkout URL from server");
+      }
+
       setActive(null);
-      load();
+      window.location.href = data.checkout_url;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Payment failed";
       toast.error(msg);
@@ -119,13 +191,19 @@ function PaymentsSandbox() {
   return (
     <DashboardShell
       title="Payments sandbox"
-      subtitle="Simulated transactions clear pending dues and unblock the pipeline."
+      subtitle="Stripe test checkout clears pending dues and unblocks the pipeline."
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Stat label="Pending dues" value={totals.count.toString()} />
         <Stat label="Outstanding" value={`₹ ${totals.sum.toFixed(2)}`} />
-        <Stat label="Mode" value="Sandbox" />
+        <Stat label="Gateway" value={stripeGatewayLabel} />
       </div>
+
+      {confirming && (
+        <div className="mt-4 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          Confirming Stripe payment with server...
+        </div>
+      )}
 
       <div className="mt-6 rounded-2xl border border-border bg-card shadow-sm">
         <div className="border-b border-border px-5 py-4">
@@ -175,9 +253,10 @@ function PaymentsSandbox() {
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Simulated payment</DialogTitle>
+            <DialogTitle>Stripe sandbox payment</DialogTitle>
             <DialogDescription>
-              This sandbox marks the due as paid and emits a digital receipt PDF.
+              You will be redirected to Stripe Checkout test mode. Use test card
+              4242 4242 4242 4242.
             </DialogDescription>
           </DialogHeader>
           {active && (
@@ -195,19 +274,6 @@ function PaymentsSandbox() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="Card number"
-                  defaultValue="4242 4242 4242 4242"
-                />
-                <input
-                  className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="MM/YY · CVC"
-                  defaultValue="12/29 · 123"
-                />
-              </div>
-
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setActive(null)} disabled={paying}>
                   Cancel
@@ -218,7 +284,7 @@ function PaymentsSandbox() {
                   ) : (
                     <CreditCard className="h-4 w-4" />
                   )}
-                  Pay ₹ {Number(active.amount).toFixed(2)}
+                  Pay with Stripe · ₹ {Number(active.amount).toFixed(2)}
                 </Button>
               </div>
             </div>
@@ -238,58 +304,4 @@ function Stat({ label, value }: { label: string; value: string }) {
       <p className="mt-2 text-2xl font-bold tracking-tight">{value}</p>
     </div>
   );
-}
-
-async function buildReceipt(args: {
-  receiptId: string;
-  studentName: string;
-  rollNo: string;
-  department: string;
-  dueType: string;
-  amount: number;
-  paidAt: Date;
-}) {
-  const pdf = await PDFDocument.create();
-  const page = pdf.addPage([595, 420]);
-  const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const blue = rgb(0, 49 / 255, 83 / 255);
-
-  page.drawRectangle({ x: 0, y: 380, width: 595, height: 40, color: blue });
-  page.drawText("NEXUS · PAYMENT RECEIPT", {
-    x: 30,
-    y: 393,
-    size: 14,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-  page.drawText(args.receiptId, {
-    x: 460,
-    y: 393,
-    size: 12,
-    font: bold,
-    color: rgb(1, 1, 1),
-  });
-
-  let y = 340;
-  const line = (label: string, value: string) => {
-    page.drawText(label, { x: 30, y, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
-    page.drawText(value, { x: 200, y, size: 11, font: bold, color: rgb(0.1, 0.1, 0.1) });
-    y -= 24;
-  };
-  line("Student", args.studentName);
-  line("Roll number", args.rollNo);
-  line("Department", args.department);
-  line("Due type", args.dueType);
-  line("Paid at", args.paidAt.toLocaleString());
-  line("Amount", `INR ${args.amount.toFixed(2)}`);
-
-  page.drawText("This is a system-generated sandbox receipt. Status: PAID.", {
-    x: 30,
-    y: 60,
-    size: 9,
-    font,
-    color: rgb(0.4, 0.4, 0.4),
-  });
-  return pdf.save();
 }
