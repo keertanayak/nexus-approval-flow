@@ -53,80 +53,20 @@ function AdminDues() {
   const [dues, setDues] = useState<(Due & { student?: Profile })[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchAllDues = async () => {
-    const all: Due[] = [];
-    const pageSize = 200;
-    let from = 0;
-
-    // Some Supabase projects enforce a low max-row cap per request.
-    // Page through results so principals/admins still see all dues.
-    for (let i = 0; i < 200; i += 1) {
-      const { data, error } = await supabase
-        .from("dues")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(from, from + pageSize - 1);
-
-      if (error) throw error;
-
-      const rows = data ?? [];
-      if (rows.length === 0) break;
-
-      all.push(...rows);
-      from += rows.length;
-    }
-
-    return all;
-  };
-
-  const fetchProfilesByIds = async (ids: string[]) => {
-    const map: Record<string, Profile> = {};
-    const uniqueIds = Array.from(new Set(ids));
-    if (!uniqueIds.length) return map;
-
-    const chunkSize = 50;
-    for (let i = 0; i < uniqueIds.length; i += chunkSize) {
-      const chunk = uniqueIds.slice(i, i + chunkSize);
-      let from = 0;
-      const pageSize = 200;
-
-      for (let p = 0; p < 200; p += 1) {
-        const { data: profs, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .in("id", chunk)
-          .range(from, from + pageSize - 1);
-
-        if (error) throw error;
-
-        const rows = profs ?? [];
-        if (rows.length === 0) break;
-
-        for (const profile of rows) {
-          map[profile.id] = profile;
-        }
-
-        from += rows.length;
-      }
-    }
-
-    return map;
-  };
-
   const load = async () => {
     setLoading(true);
-    try {
-      const dRows = await fetchAllDues();
-      const ids = dRows.map((d) => d.student_id);
-      const map = await fetchProfilesByIds(ids);
-      setDues(dRows.map((d) => ({ ...d, student: map[d.student_id] })));
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to load dues";
-      toast.error(msg);
-      setDues([]);
-    } finally {
-      setLoading(false);
+    const { data: dRows } = await supabase
+      .from("dues")
+      .select("*")
+      .order("created_at", { ascending: false });
+    const ids = Array.from(new Set((dRows ?? []).map((d) => d.student_id)));
+    let map: Record<string, Profile> = {};
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("*").in("id", ids);
+      map = Object.fromEntries((profs ?? []).map((p) => [p.id, p]));
     }
+    setDues((dRows ?? []).map((d) => ({ ...d, student: map[d.student_id] })));
+    setLoading(false);
   };
 
   useEffect(() => {
